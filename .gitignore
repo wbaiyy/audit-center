@@ -1,0 +1,7 @@
+# Created by .ignore support plugin (hsz.mobi)
+.idea/
+config.json
+config_test.json
+audit-engine
+config_dev.json
+config_prod.json
