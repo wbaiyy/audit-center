@@ -1,11 +1,13 @@
 package main
 
 import (
-	"audit_engine/config"
-	"audit_engine/mydb"
-	"audit_engine/rabbit"
-	"audit_engine/task"
+	"audit-center/config"
+	"audit-center/mydb"
+	"audit-center/rabbit"
+	"audit-center/task"
 	"log"
+	"strings"
+	"sync"
 )
 
 var (
@@ -30,21 +32,44 @@ func main() {
 	mydb.DB = mydb.Connect(cfg.Mysql)
 
 	//task 执行
-	running()
+	Dispatch()
+	log.Println("Audit Rule Engine END !!!")
+	//running()
 }
 
+//根据队列处理
+func Dispatch() {
+	var wg sync.WaitGroup
+	queues := strings.Split(cmd.QName, ",")
+	for _, queueName := range queues  {
+		if config.IsValidateQueueName(queueName) {
+			wg.Add(1)
+			go func(queueName string) {
+				defer wg.Done()
+				running(queueName)
+			}(queueName)
+		}
+	}
+	wg.Wait()
+}
+
+
+
 //基于命令行的指令执行对应任务
-func running() {
+func running(queueName string) {
 	// 队列连接
 	var mq rabbit.MQ
-	if cmd.QName == config.QueName["SOA_AUDIT_MSG"] {
+	if config.IsSoaQueue(queueName) {
 		mq = tk.MqSoaVh
-	} else {
+	} else if config.IsGbQueue(queueName) {
 		mq = tk.MqGbVh
+	} else {
+		mq = tk.MqObsVh
 	}
 
 	// 队列创建
-	q := mq.Create(cmd.QName)
+	mq.GetChannel(queueName)
+	q := mq.Create(queueName)
 
 	// 任务分派
 	switch {
@@ -52,8 +77,9 @@ func running() {
 		log.Println("message publish to queue:", q.Name)
 		mq.Publish(q.Name, SimulateData(q.Name, &cmd), cmd.RepNumber)
 	case cmd.Cus:
-		log.Println("message consume from queue:", q.Name)
-		mq.Consume(q.Name, tk.GetWork(q.Name, cmd.T), cmd.NoAck)
+		//log.Println("message consume from queue:", q.Name)
+		//mq.Consume(q.Name, tk.GetWork(q.Name, cmd.T), cmd.NoAck)
+		tk.RunWork(mq.Consume(q.Name), tk.GetWork(q.Name, cmd.T), cmd.WorkerNumber, cmd.NoAck, queueName)
 	default:
 		log.Fatalln("[x]", "queue must be consume or publish")
 	}

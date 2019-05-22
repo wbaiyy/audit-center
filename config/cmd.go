@@ -23,6 +23,7 @@ type CmdArgs struct {
 	Cus       bool
 	MsgData   string
 	RepNumber int
+	WorkerNumber int
 }
 
 func (cmd *CmdArgs) Parse() {
@@ -40,6 +41,7 @@ func (cmd *CmdArgs) Parse() {
 	pflag.StringVarP(&cmd.QName, "queue", "q", "", `message queue name(`+availQueue()+`)`)
 	pflag.StringVarP(&cmd.MsgData, "msg_data", "D", "", `message data used for publish`)
 	pflag.IntVarP(&cmd.RepNumber, "rep_number", "n", 1, `message data send rep_number time`)
+	pflag.IntVarP(&cmd.WorkerNumber, "worker_number", "w", 1, `worker that work message`)
 	pflag.Parse()
 
 	//show info

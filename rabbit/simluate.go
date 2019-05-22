@@ -1,7 +1,7 @@
 package rabbit
 
 import (
-	"audit_engine/tool"
+	"audit-center/tool"
 	"encoding/json"
 )
 

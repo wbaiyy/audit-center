@@ -31,8 +31,14 @@ type AuditMsg struct {
 	Remark     string // 用户消息备注
 }
 
-//价格审核业务数据结构
+//业务数据结构
 type BusinessData struct {
+	GoodsBusinessData
+	CouponBusinessData
+}
+
+//价格审核业务数据结构
+type GoodsBusinessData struct {
 	CalculatePrice float64 //计算结果价格
 	ChargePrice    float64 //计费价格
 	PriceLoss      float64 //亏损金额，SOA无此数据，需审核中心计算
@@ -46,6 +52,21 @@ type BusinessData struct {
 	SaleMark       int     //销售标识：1：正常 3：清仓
 }
 
+//COUPON审核业务数据
+type CouponBusinessData struct {
+	TemplateId          int		//COUPON模板
+	PerUserReceiveCount int		//单用户领取次数
+	LimitCount          int		//总使用次数
+	UserLimitCount      int		//单用户使用次数
+	IncludeGoodsCount   int		//适用SKU数
+	FullAmount          float64	//满金额
+	FullCount           int		//满数量
+	ReducePercent       float64 //减百分比
+	ReduceAmount        float64 //减金额
+	ReduceCount         int		//减数量
+	FixedPrice          float64 //一口价成本
+}
+
 //-----------------
 //obs
 //-----------------
@@ -54,4 +75,15 @@ type BusinessData struct {
 type PersonAuditResult struct {
 	MsgId  int64 `json:"message_id"`
 	Status int
+}
+
+//人工撤销审核数据结构 //{"message_id":"1","status":"2"}
+type PersonRevokeAudit struct {
+	SiteCode     string      //站点编码
+	BussUuid     interface{} //唯一业务ID(default uuid=0)
+	RevokeRemark string      //撤销备注
+	RevokeUid    int         //审核人ID
+	RevokeUser   string      //审核人名
+	RevokeTime   int         //撤销时间
+	RevokeMark   string      // 撤销模板类型  ‘goods-price-check’ => '价格审核' ‘promotion-coupon-check’ => 'coupon审核'
 }

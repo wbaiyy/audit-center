@@ -1,11 +1,12 @@
 package task
 
 import (
-	"audit_engine/mydb"
-	"audit_engine/rabbit"
+	"audit-center/mydb"
+	"audit-center/rabbit"
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -28,16 +29,16 @@ func (tk *ConsumeTask) workAuditMessage(msg []byte) bool {
 		log.Println(err, "unmarshal business data fail")
 		return false
 	}
-	log.Printf("bussData: %+v\n", audBd)
+	//log.Printf("bussData: %+v\n", audBd)
 
 	//hash map 规则
-	hashRuleTypes := tk.GetRuleItems()
+	hashRuleTypes := tk.GetRuleItems(audMsg.AuditMark)
 	audType, ok := hashRuleTypes[audMsg.AuditMark]
 	if !ok {
 		log.Println(audMsg.AuditMark, "hash key not exist")
 		return false
 	}
-	log.Printf("ruleList: %+v", audType)
+	//log.Printf("ruleList: %+v", audType)
 
 	//规则校验(rt)
 	audStat, rulMch := RunRuleMatch(&audBd, &audType)
@@ -75,13 +76,22 @@ func (tk *ConsumeTask) insertAuditMsg(audMsg rabbit.AuditMsg, audBd rabbit.Busin
 		"create_time",
 		"message_remark", //add at 2019-1-19
 	}
+
+	
+	var auditName string
+	switch audMsg.AuditMark  {
+		case "goods-price-check":
+			auditName = "sku:" + audBd.GoodSn + "-%s"
+		case "promotion-coupon-check":
+			auditName = "templateId:" + strconv.Itoa(audBd.TemplateId) + "-%s"
+	}
 	args := []interface{}{
 		audMsg.SiteCode,
 		rulMch.RuleId,
 		audType.TypeId,
 		audType.AuditSort,
 		audType.AuditMark,
-		fmt.Sprintf("sku:%s-%s", audBd.GoodSn, audType.TypeTitle),
+		fmt.Sprintf(auditName, audType.TypeTitle),
 		audMsg.BussUuid,
 		audMsg.BussData,
 		audMsg.CreateUser,
@@ -132,7 +142,7 @@ func (tk *ConsumeTask) insertAuditMsg(audMsg rabbit.AuditMsg, audBd rabbit.Busin
 		return
 	}
 	lastId, err := result.LastInsertId()
-	log.Printf("success insert id: %d", lastId)
+	//log.Printf("success insert id: %d", lastId)
 
 	//自动通过或拒绝，发布消息
 	if audOver {

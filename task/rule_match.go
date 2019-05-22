@@ -1,7 +1,7 @@
 package task
 
 import (
-	"audit_engine/rabbit"
+	"audit-center/rabbit"
 	"fmt"
 	"log"
 )
@@ -52,6 +52,7 @@ type ItemMatch struct {
 //bussData 转成对应项的string值
 func bussDataToString(field string, bussData *rabbit.BusinessData, baseRate float64) string {
 	switch field {
+	//商品价格审核字段
 	case "catId":
 		return fmt.Sprintf("%d", bussData.CatId)
 	case "changeType":
@@ -70,6 +71,29 @@ func bussDataToString(field string, bussData *rabbit.BusinessData, baseRate floa
 		return bussData.VirWhCode
 	case "saleMark":
 		return fmt.Sprintf("%d", bussData.SaleMark)
+	//COUPON审核字段
+	case "templateId":
+		return fmt.Sprintf("%d", bussData.TemplateId)
+	case "perUserReceiveCount":
+		return fmt.Sprintf("%d", bussData.PerUserReceiveCount)
+	case "limitCount":
+		return fmt.Sprintf("%d", bussData.LimitCount)
+	case "userLimitCount":
+		return fmt.Sprintf("%d", bussData.UserLimitCount)
+	case "includeGoodsCount":
+		return fmt.Sprintf("%d", bussData.IncludeGoodsCount)
+	case "fullCount":
+		return fmt.Sprintf("%d", bussData.FullCount)
+	case "fullAmount":
+		return fmt.Sprintf("%0.4f", bussData.FullAmount)
+	case "reducePercent":
+		return fmt.Sprintf("%0.4f", bussData.ReducePercent)
+	case "reduceAmount":
+		return fmt.Sprintf("%0.4f", bussData.ReduceAmount)
+	case "reduceCount":
+		return fmt.Sprintf("%d", bussData.ReduceCount)
+	case "fixedPrice":
+		return fmt.Sprintf("%0.4f", bussData.FixedPrice)
 	}
 	return "=X="
 }

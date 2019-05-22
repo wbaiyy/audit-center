@@ -2,6 +2,6 @@
 .idea/
 config.json
 config_test.json
-audit-engine
+audit-center
 config_dev.json
 config_prod.json

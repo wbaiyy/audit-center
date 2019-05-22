@@ -1,7 +1,7 @@
 package rabbit
 
 import (
-	"audit_engine/tool"
+	"audit-center/tool"
 	"fmt"
 	"github.com/streadway/amqp"
 	"log"
@@ -17,12 +17,16 @@ type Config struct {
 
 type MQ struct {
 	conn *amqp.Connection
-	ch   *amqp.Channel
+	//ch   *amqp.Channel
+	Channels  map[string]*amqp.Channel
 }
 
 func (mq *MQ) Close() {
+	for _, ch := range mq.Channels {
+		ch.Close();
+	}
 	mq.conn.Close()
-	mq.ch.Close()
+	//mq.ch.Close()
 }
 
 //队列初始化
@@ -35,8 +39,18 @@ func (mq *MQ) Init(mqcf Config) {
 	tool.FatalLog(err, "failed to connect to RabbitMQ")
 
 	//channel
-	mq.ch, err = mq.conn.Channel()
+	//mq.ch, err = mq.conn.Channel()
+	//tool.FatalLog(err, "failed to open a channel")
+	//
+	mq.Channels = make(map[string]*amqp.Channel)
+}
+
+func (mq *MQ) GetChannel(queueName string ) *amqp.Channel{
+	channel, err := mq.conn.Channel()
 	tool.FatalLog(err, "failed to open a channel")
+	mq.Channels[queueName] = channel
+
+	return channel
 }
 
 //队列创建
@@ -46,7 +60,8 @@ func (mq *MQ) Create(qn string) amqp.Queue {
 		durable = false
 		autoDelete = true
 	}
-	q, err := mq.ch.QueueDeclare(
+
+	q, err := mq.Channels[qn].QueueDeclare(
 		qn,
 		durable,
 		autoDelete,
@@ -54,16 +69,17 @@ func (mq *MQ) Create(qn string) amqp.Queue {
 		false,
 		nil,
 	)
+
 	tool.FatalLog(err, "failed to declare queue")
 	return q
 }
 
 //队列消费程序绑定
-func (mq *MQ) Consume(qn string, fn func([]byte) bool, noAck bool) {
+func (mq *MQ) Consume(qn string)<-chan amqp.Delivery {
 	//consume resister
-	msgs, err := mq.ch.Consume(
+	msgs, err := mq.Channels[qn].Consume(
 		qn,
-		"audit-engine",
+		"audit-center",
 		false,
 		false,
 		false,
@@ -73,25 +89,11 @@ func (mq *MQ) Consume(qn string, fn func([]byte) bool, noAck bool) {
 	tool.FatalLog(err, "failed to register a consumer")
 
 	//set qos
-	err = mq.ch.Qos(5, 0, false)
+	var prefetchCount = 5
+	err = mq.Channels[qn].Qos(prefetchCount, 0, false)
 	tool.FatalLog(err, "failed to set channel qos")
-	//consume work
-	forever := make(chan bool)
-	go func() {
-		for d := range msgs {
-			log.Printf("Received message: %s", d.Body)
-			log.Printf("==> [%s] task start...", qn)
-			success := fn(d.Body)
-			log.Printf("<== [%s] task done, result: [%v]!!", qn, success)
-			log.Println("[*] waiting for message. To exit press CTRL+C")
 
-			if success && !noAck {
-				d.Ack(false)
-			}
-		}
-	}()
-	log.Println("[*] waiting for message. To exit press CTRL+C")
-	<-forever
+	return msgs
 }
 
 //队列发布消息
@@ -101,10 +103,15 @@ func (mq *MQ) Publish(qn string, data []byte, n int) {
 		Body:        data,
 		ContentType: "text/plain",
 	}
+	channel, isExist := mq.Channels[qn]
+	if !isExist {
+		channel = mq.GetChannel(qn)
+	}
+	log.Println(fmt.Sprintf("==>[%s] send result: %s", qn, string(data)))
 
 	for i := 0; i < n; i++ {
-		err := mq.ch.Publish("", qn, false, false, msg)
+		err := channel.Publish("", qn, false, false, msg)
 		tool.FatalLog(err, "failed to publish a message")
-		log.Println("send message finish")
+		//log.Println("send message finish")
 	}
 }

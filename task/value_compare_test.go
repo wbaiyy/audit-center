@@ -1,7 +1,7 @@
 package task_test
 
 import (
-	"audit_engine/task"
+	"audit-center/task"
 	"testing"
 )
 

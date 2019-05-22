@@ -1,9 +1,9 @@
 package config
 
 import (
-	"audit_engine/mydb"
-	"audit_engine/rabbit"
-	"audit_engine/tool"
+	"audit-center/mydb"
+	"audit-center/rabbit"
+	"audit-center/tool"
 	"github.com/spf13/viper"
 	"log"
 )
@@ -35,7 +35,7 @@ func (cfg *CFG) InitByCmd(cmd CmdArgs) {
 
 	//init rabbitmq config
 	cfg.RabbitMq = make(map[string]rabbit.Config)
-	for _, v := range []string{"soa", "gb"} {
+	for _, v := range []string{"soa", "gb", "obs"} {
 		cfg.RabbitMq[v] = rabbit.Config{
 			Host:  viper.GetString("rabbitmq." + v + ".host"),
 			Port:  viper.GetInt("rabbitmq." + v + ".port"),

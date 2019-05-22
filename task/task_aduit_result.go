@@ -1,12 +1,13 @@
 package task
 
 import (
-	"audit_engine/bucket"
-	"audit_engine/config"
-	"audit_engine/mydb"
-	"audit_engine/rabbit"
+	"audit-center/bucket"
+	"audit-center/config"
+	"audit-center/mydb"
+	"audit-center/rabbit"
 	"encoding/json"
 	"fmt"
+	"github.com/astaxie/beego/logs"
 	"log"
 	"time"
 )
@@ -41,8 +42,8 @@ func (tk *ConsumeTask) workUpdateAuditResult(msg []byte) bool {
 	//行记录
 	rn, err := rst.RowsAffected()
 	if err != nil || rn == 0 {
-		log.Println(err, "upd audit status fail(update none row)")
-		return false
+		logs.Warning(err, "upd audit status fail(update none row),message_id=",  par.MsgId)
+		return true
 	}
 	log.Printf("update rows num: %d", rn)
 
@@ -102,10 +103,10 @@ WHERE m.message_id = ? ORDER BY r.id desc LIMIT 1;`
 		log.Println(err, "marshal result msg data fail")
 		return
 	}
-	log.Printf("audit back msg : %s", b)
+	//log.Printf("audit back msg : %s", b)
 
 	//msg return
-	tk.MqGbVh.Publish(config.QueName["SOA_AUDIT_BACK_MSG"], b, 1)
+	tk.MqObsVh.Publish(getNotifyResultQueue(bkMsg.AuditMark), b, 1)
 }
 
 //审核状态描述
@@ -139,4 +140,16 @@ func GetAdUser(user string, defUser string) string {
 		return user
 	}
 	return defUser
+}
+
+//根据审核类型获取结果通知队列名称
+func getNotifyResultQueue(auditMark string) string {
+	switch auditMark {
+	case "goods-price-check" :
+		return config.QueName["SOA_AUDIT_BACK_MSG"]
+	case "promotion-coupon-check":
+		return config.QueName["TASK_AUDIT_BACK_MSG"]
+	}
+
+	return ""
 }

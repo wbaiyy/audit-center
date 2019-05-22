@@ -1,7 +1,9 @@
 package task
 
 import (
-	"audit_engine/mydb"
+	"audit-center/mydb"
+	"audit-center/tool"
+	"fmt"
 	"log"
 )
 
@@ -38,14 +40,14 @@ type RuleItem struct {
 }
 
 //规则项(compare_type 1:阈值 2:字段）
-func (tk *ConsumeTask) GetRuleItems() AuditTypeList {
+func (tk *ConsumeTask) GetRuleItems(auditMark string) AuditTypeList {
 	db := mydb.DB
 
 	//---------审核类型
-	sql := `select id, title, sort,audit_mark from audit_template;`
+	sql := fmt.Sprintf(`select id, title, sort,audit_mark from audit_template where audit_mark = "%s";`, auditMark)
 	rows, err := db.Query(sql)
 	if err != nil {
-		log.Fatal(err)
+		tool.FatalLog(err, "SELECT audit_template")
 	}
 
 	var aTypes []AuditType

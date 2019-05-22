@@ -13,6 +13,13 @@
       "port": 5672,
       "user": "guest",
       "pass": "guest"
+    },
+    "obs": {
+      "vhost": "vhost",
+      "host": "localhost",
+      "port": 5672,
+      "user": "guest",
+      "pass": "guest"
     }
   },
   "mysql": {

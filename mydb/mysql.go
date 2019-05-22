@@ -1,7 +1,7 @@
 package mydb
 
 import (
-	"audit_engine/tool"
+	"audit-center/tool"
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
