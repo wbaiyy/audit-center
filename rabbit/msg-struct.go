@@ -50,6 +50,7 @@ type GoodsBusinessData struct {
 	Rate           float64 //利润率
 	ChangeType     int     //价格变更类型：1：人工 2：系统
 	SaleMark       int     //销售标识：1：正常 3：清仓
+	FreightPrice   float64 //包邮运费
 }
 
 //COUPON审核业务数据

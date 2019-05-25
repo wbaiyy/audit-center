@@ -18,7 +18,7 @@ type CFG struct {
 	Test       bool
 	ConfigFile string
 	RabbitMq   map[string]rabbit.Config
-	Mysql      mydb.Config
+	Mysql      map[string]mydb.Config
 }
 
 //config init
@@ -46,14 +46,17 @@ func (cfg *CFG) InitByCmd(cmd CmdArgs) {
 	}
 
 	//init mysql config
-	cfg.Mysql = mydb.Config{
-		Host:        viper.GetString("mysql.host"),
-		Port:        viper.GetInt("mysql.port"),
-		User:        viper.GetString("mysql.user"),
-		Pass:        viper.GetString("mysql.pass"),
-		DbName:      viper.GetString("mysql.dbname"),
-		Protocol:    viper.GetString("mysql.protocol"),
-		ConnMaxLife: viper.GetInt("mysql.conn_max_life"),
+	cfg.Mysql = make(map[string]mydb.Config)
+	for _, v := range []string{"obs", "goods"}  {
+		cfg.Mysql[v] = mydb.Config{
+			Host:        viper.GetString("mysql." + v + ".host"),
+			Port:        viper.GetInt("mysql." + v + ".port"),
+			User:        viper.GetString("mysql." + v + ".user"),
+			Pass:        viper.GetString("mysql." + v + ".pass"),
+			DbName:      viper.GetString("mysql." + v + ".dbname"),
+			Protocol:    viper.GetString("mysql." + v + ".protocol"),
+			ConnMaxLife: viper.GetInt("mysql." + v + ".conn_max_life"),
+		}
 	}
 
 	//print env info

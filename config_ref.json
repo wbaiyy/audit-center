@@ -23,12 +23,23 @@
     }
   },
   "mysql": {
-    "host": "localhost",
-    "port": 3306,
-    "user": "auditcenter",
-    "pass": "Secret123.",
-    "dbname": "dbname",
-    "protocol": "tcp",
-    "conn_max_life": 120
+    "obs":{
+      "host": "localhost",
+      "port": 3306,
+      "user": "auditcenter",
+      "pass": "Secret123.",
+      "dbname": "dbname",
+      "protocol": "tcp",
+      "conn_max_life": 120
+    },
+    "goods": {
+      "host": "localhost",
+      "port": 3306,
+      "user": "auditcenter",
+      "pass": "Secret123.",
+      "dbname": "dbname",
+      "protocol": "tcp",
+      "conn_max_life": 120
+    }
   }
 }

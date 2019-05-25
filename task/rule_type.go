@@ -1,10 +1,13 @@
 package task
 
 import (
+	"audit-center/cache"
 	"audit-center/mydb"
 	"audit-center/tool"
+	"database/sql"
 	"fmt"
 	"log"
+	"time"
 )
 
 //规则哈希表
@@ -146,4 +149,38 @@ func (tk *ConsumeTask) GetRuleItems(auditMark string) AuditTypeList {
 	//log.Printf("hashAuditTypeList: %+v\n", hashAuditTypeList)
 
 	return hashAuditTypeList
+}
+
+func getCostPrice(virWhCode string, goodSn string, chargePrice float64) float64 {
+	c := cache.Storage
+	key := fmt.Sprintf("goods:%s:%s", virWhCode, goodSn)
+	goodsCostPrice, found  := c.Get(key)
+	fmt.Println(goodsCostPrice, found)
+	if found {
+		return  goodsCostPrice.(float64)
+	}
+	dbPrice := getCostPriceFromDb(virWhCode, goodSn)
+	if dbPrice == 0 {
+		return chargePrice
+	}
+
+	c.Set(key, dbPrice , 2 * time . Minute)
+	return dbPrice
+}
+
+func getCostPriceFromDb(virWhCode string, goodSn string) float64{
+	db := mydb.GoodsDB
+	var goodsCostPrice float64
+	err := db.QueryRow(
+		`SELECT shiji_price FROM public_ods_gb_v_purchase_bill_base_months WHERE v_wh_code=? AND sku=?`, virWhCode, goodSn ).
+		Scan(&goodsCostPrice)
+
+	switch {
+	case err == sql.ErrNoRows:
+		return 0
+	case err != nil:
+		tool.FatalLog(err, "QueryRow [table->public_ods_gb_v_purchase_bill_base_months] error:")
+	}
+
+	return goodsCostPrice
 }

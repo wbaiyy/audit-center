@@ -1,6 +1,7 @@
 package main
 
 import (
+	"audit-center/cache"
 	"audit-center/config"
 	"audit-center/mydb"
 	"audit-center/rabbit"
@@ -29,7 +30,11 @@ func main() {
 	defer tk.Stop()
 
 	//mysql 初始化
-	mydb.DB = mydb.Connect(cfg.Mysql)
+	mydb.DB = mydb.Connect(cfg.Mysql["obs"])
+	mydb.GoodsDB= mydb.Connect(cfg.Mysql["goods"])
+
+	//cache 初始化
+	cache.Storage = cache.New()
 
 	//task 执行
 	Dispatch()

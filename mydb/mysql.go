@@ -21,6 +21,7 @@ type Config struct {
 }
 
 var DB *sql.DB
+var GoodsDB *sql.DB
 
 func Connect(dbcf Config) *sql.DB {
 	dsn := fmt.Sprintf("%s:%s@%s(%s:%d)/%s", dbcf.User, dbcf.Pass, dbcf.Protocol, dbcf.Host, dbcf.Port, dbcf.DbName)
@@ -34,7 +35,7 @@ func Connect(dbcf Config) *sql.DB {
 	db.SetMaxIdleConns(10)
 
 	//连接的最大生命周期
-	log.Println("db connection max alive time:", time.Duration(dbcf.ConnMaxLife)*time.Second)
+	log.Println(fmt.Sprintf("db:%s connection max alive time:%v", dbcf.DbName, time.Duration(dbcf.ConnMaxLife) * time.Second))
 	db.SetConnMaxLifetime(time.Duration(dbcf.ConnMaxLife) * time.Second)
 	return db
 }

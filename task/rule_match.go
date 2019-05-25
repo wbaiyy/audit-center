@@ -49,6 +49,12 @@ type ItemMatch struct {
 	Explain string
 }
 
+type GoodsCostPrice struct {
+	CostPrice float64
+	GoodSn    string
+	VirWhCode string
+}
+
 //bussData 转成对应项的string值
 func bussDataToString(field string, bussData *rabbit.BusinessData, baseRate float64) string {
 	switch field {
@@ -62,7 +68,7 @@ func bussDataToString(field string, bussData *rabbit.BusinessData, baseRate floa
 	case "pipelineCode":
 		return bussData.PipelineCode
 	case "priceLoss":
-		return GetPriceLoss(bussData.ChargePrice, bussData.Rate, baseRate)
+		return GetPriceLoss(bussData.ChargePrice, bussData, baseRate)
 	case "rate":
 		return fmt.Sprintf("%0.4f", bussData.Rate)
 	case "sysLabelId":
@@ -99,9 +105,14 @@ func bussDataToString(field string, bussData *rabbit.BusinessData, baseRate floa
 }
 
 //get priceLoss
-func GetPriceLoss(chargePrice float64, rate float64, baseRate float64) string {
+func GetPriceLoss(chargePrice float64, bussData *rabbit.BusinessData, baseRate float64) string {
 	//亏损金额 = before:（利润率 - 基础利润率） × 计费价格 /  6.1, now:（ 基础利润率  - 利润率） × 计费价格 /  6.1
-	return fmt.Sprintf("%0.4f", chargePrice*(baseRate-rate)/6.1)
+	//return fmt.Sprintf("%0.4f", chargePrice*(baseRate-rate)/6.1)
+
+	//(采购价+商品包邮运费)/6.5×1.03-需审核价格; 采购价:SKU+销售仓向决策获取对应的采购价,不存在取chargePrice
+	priceLoss :=  getCostPrice(bussData.VirWhCode, bussData.GoodSn, chargePrice)
+	fmt.Println("GetPriceLoss:", priceLoss, bussData.FreightPrice, bussData.CalculatePrice)
+	return fmt.Sprintf("%0.4f", (priceLoss + bussData.FreightPrice) / 6.5 * 1.03 - bussData.CalculatePrice)
 }
 
 //rule多条规则比较
