@@ -24,5 +24,5 @@ func SimAuditBackMsg() []byte {
 
 //审核消息模拟
 func SimAuditMsg() []byte {
-	return []byte(`{"auditMark":"goods-price-check","bussData":"{\"calculatePrice\":52.02,\"catId\":11286,\"changeType\":1,\"chargePrice\":59.00000,\"goodSn\":\"YL4225902\",\"pipelineCode\":\"GB\",\"rate\":3.68,\"sysLabelId\":-1,\"virWhCode\":\"1433363\"}","bussUuid":"13710","createTime":1535427621607,"createUser":"huang","createUserId":0,"module":"goods","siteCode":"GB"}`)
+	return []byte(`{"auditMark":"goods-price-check","bussData":"{\"calculatePrice\":33.99,\"catId\":11293,\"changeType\":1,\"chargePrice\":666.99000,\"freightPrice\":0,\"goodSn\":\"249353702\",\"pipelineCode\":\"GB\",\"rate\":0.31,\"saleMark\":1,\"sysLabelId\":8,\"virWhCode\":\"1433363\"}","bussUuid":"3210961","createTime":1560928203971,"createUid":2,"createUser":"wangbei","module":"goods","siteCode":"GB"}`)
 }

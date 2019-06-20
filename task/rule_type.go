@@ -152,19 +152,24 @@ func (tk *ConsumeTask) GetRuleItems(auditMark string) AuditTypeList {
 }
 
 func getCostPrice(virWhCode string, goodSn string, chargePrice float64) float64 {
-	c := cache.Storage
 	key := fmt.Sprintf("goods:%s:%s", virWhCode, goodSn)
-	goodsCostPrice, found  := c.Get(key)
-	fmt.Println(goodsCostPrice, found)
+	goodsCostPrice, found  := cache.Storage.Get(key)
+	log.Println(key, "lossPrice", goodsCostPrice, found)
 	if found {
-		return  goodsCostPrice.(float64)
+		goodsFoundPrice := goodsCostPrice.(float64)
+		if  goodsFoundPrice == 0 {
+			return chargePrice
+		} else  {
+			return goodsFoundPrice
+		}
 	}
 	dbPrice := getCostPriceFromDb(virWhCode, goodSn)
+	cache.Storage.Set(key, dbPrice , 5 * time. Minute)
+
 	if dbPrice == 0 {
 		return chargePrice
 	}
 
-	c.Set(key, dbPrice , 2 * time . Minute)
 	return dbPrice
 }
 

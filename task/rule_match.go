@@ -56,7 +56,7 @@ type GoodsCostPrice struct {
 }
 
 //bussData 转成对应项的string值
-func bussDataToString(field string, bussData *rabbit.BusinessData, baseRate float64) string {
+func bussDataToString(field string, bussData *rabbit.BusinessData, processPrice string) string {
 	switch field {
 	//商品价格审核字段
 	case "catId":
@@ -68,7 +68,7 @@ func bussDataToString(field string, bussData *rabbit.BusinessData, baseRate floa
 	case "pipelineCode":
 		return bussData.PipelineCode
 	case "priceLoss":
-		return GetPriceLoss(bussData.ChargePrice, bussData, baseRate)
+		return processPrice
 	case "rate":
 		return fmt.Sprintf("%0.4f", bussData.Rate)
 	case "sysLabelId":
@@ -105,13 +105,11 @@ func bussDataToString(field string, bussData *rabbit.BusinessData, baseRate floa
 }
 
 //get priceLoss
-func GetPriceLoss(chargePrice float64, bussData *rabbit.BusinessData, baseRate float64) string {
+func GetPriceLoss(chargePrice float64, bussData *rabbit.BusinessData) string {
 	//亏损金额 = before:（利润率 - 基础利润率） × 计费价格 /  6.1, now:（ 基础利润率  - 利润率） × 计费价格 /  6.1
 	//return fmt.Sprintf("%0.4f", chargePrice*(baseRate-rate)/6.1)
-
 	//(采购价+商品包邮运费)/6.5×1.03-需审核价格; 采购价:SKU+销售仓向决策获取对应的采购价,不存在取chargePrice
 	priceLoss :=  getCostPrice(bussData.VirWhCode, bussData.GoodSn, chargePrice)
-	fmt.Println("GetPriceLoss:", priceLoss, bussData.FreightPrice, bussData.CalculatePrice)
 	return fmt.Sprintf("%0.4f", (priceLoss + bussData.FreightPrice) / 6.5 * 1.03 - bussData.CalculatePrice)
 }
 
@@ -120,7 +118,8 @@ func GetPriceLoss(chargePrice float64, bussData *rabbit.BusinessData, baseRate f
 // int:	1 系统通过，2 系统驳回，3 转人工审核
 // RuleMatch: 匹配的规则明细
 func RunRuleMatch(bussData *rabbit.BusinessData, auditType *AuditType) (int, RuleMatch) {
-
+	//亏损金额
+	processPrice := GetPriceLoss(bussData.ChargePrice, bussData)
 	var rml []RuleMatch
 	var result int
 
@@ -129,7 +128,7 @@ func RunRuleMatch(bussData *rabbit.BusinessData, auditType *AuditType) (int, Rul
 
 		//item结果
 		for _, item := range rule.ItemList {
-			field := bussDataToString(item.Field, bussData, rule.Profit)
+			field := bussDataToString(item.Field, bussData, processPrice)
 			match := ValueCompare(field, item.Operate, item.Value)
 			im := ItemMatch{
 				ItemId:  item.ItemId,

@@ -66,7 +66,6 @@ func (tk *ConsumeTask) RunWork(messages <-chan amqp.Delivery, workMethod func([]
 				}
 				success := workMethod(d.Body)
 				log.Printf("<== [%s] task-%d done, result: [%v]!!", qn, i, success)
-
 				if success && !noAck {
 					d.Ack(false)
 				}
