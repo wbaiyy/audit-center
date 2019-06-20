@@ -76,6 +76,10 @@ func (mq *MQ) Create(qn string) amqp.Queue {
 
 //队列消费程序绑定
 func (mq *MQ) Consume(qn string)<-chan amqp.Delivery {
+	//set qos
+	err := mq.Channels[qn].Qos(5, 0, false)
+	tool.FatalLog(err, "failed to set channel qos")
+
 	//consume resister
 	msgs, err := mq.Channels[qn].Consume(
 		qn,
@@ -87,11 +91,6 @@ func (mq *MQ) Consume(qn string)<-chan amqp.Delivery {
 		nil,
 	)
 	tool.FatalLog(err, "failed to register a consumer")
-
-	//set qos
-	var prefetchCount = 5
-	err = mq.Channels[qn].Qos(prefetchCount, 0, false)
-	tool.FatalLog(err, "failed to set channel qos")
 
 	return msgs
 }
